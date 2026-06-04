@@ -1,7 +1,31 @@
+:root {
+  color-scheme: light;
+  --page-bg: #ffffff;
+  --page-fg: #111111;
+  --toolbar-bg: #f7f7f7;
+  --toolbar-border: #dddddd;
+  --button-bg: #ffffff;
+  --button-fg: #111111;
+  --button-border: #cccccc;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page-bg: #1e1e1e;
+  --page-fg: #dddddd;
+  --toolbar-bg: #252526;
+  --toolbar-border: #3a3a3a;
+  --button-bg: #333333;
+  --button-fg: #eeeeee;
+  --button-border: #555555;
+}
+
 html,
 body {
   margin: 0;
   height: 100%;
+  color: var(--page-fg);
+  background: var(--page-bg);
   font-family: system-ui, sans-serif;
 }
 
@@ -11,8 +35,18 @@ body {
   align-items: center;
   gap: 12px;
   padding: 0 12px;
-  border-bottom: 1px solid #ddd;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
   box-sizing: border-box;
+}
+
+button {
+  color: var(--button-fg);
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 #status {
