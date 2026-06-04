@@ -160,4 +160,28 @@ document.querySelector<HTMLButtonElement>("#clear")?.addEventListener("click", (
 	setStatus("Cleared");
 });
 
+
+function replaceEditorText(view: EditorView, text: string) {
+	view.dispatch({
+		changes: {
+			from: 0,
+			to: view.state.doc.length,
+			insert: text,
+		},
+	});
+}
+
+document.querySelector<HTMLButtonElement>("#swap")?.addEventListener("click", () => {
+	const leftText = mergeView.a.state.doc.toString();
+	const rightText = mergeView.b.state.doc.toString();
+
+	replaceEditorText(mergeView.a, rightText);
+	replaceEditorText(mergeView.b, leftText);
+
+	localStorage.setItem(LEFT_KEY, rightText);
+	localStorage.setItem(RIGHT_KEY, leftText);
+
+	setStatus("Swapped left and right");
+});
+
 applyPageTheme();
