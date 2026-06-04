@@ -30,7 +30,7 @@ body {
 }
 
 #toolbar {
-  height: 40px;
+  height: 44px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -38,6 +38,11 @@ body {
   background: var(--toolbar-bg);
   border-bottom: 1px solid var(--toolbar-border);
   box-sizing: border-box;
+}
+
+.hint {
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 button {
@@ -49,14 +54,18 @@ button {
   cursor: pointer;
 }
 
-#status {
-  margin-left: auto;
-  font-size: 12px;
-  opacity: 0.7;
+#editor {
+  height: calc(100vh - 44px);
 }
 
-#editor {
-  height: calc(100vh - 40px);
+/*
+  Important for @codemirror/merge.
+  The docs mention that merge views are not scrollable by default,
+  so we should style .cm-mergeView with height + overflow.
+*/
+.cm-mergeView {
+  height: 100%;
+  overflow: auto;
 }
 
 .cm-editor {
