@@ -1,7 +1,10 @@
 COMPOSE_FILE := deployments/compose.yml
+ENV_FILE ?= deployments/.env-local
 SERVICE := webvim
 
-.PHONY: help dev build preview docker-build docker-up docker-down docker-logs docker-ps docker-restart docker-clean
+COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
+
+.PHONY: help dev build preview ensure-env docker-build docker-up docker-down docker-logs docker-ps docker-restart docker-clean
 
 help:
 	@echo "Available commands:"
@@ -15,6 +18,9 @@ help:
 	@echo "  make docker-ps      Show compose services"
 	@echo "  make docker-restart Restart container"
 	@echo "  make docker-clean   Stop and remove container/images/orphans"
+	@echo ""
+	@echo "Variables:"
+	@echo "  ENV_FILE=$(ENV_FILE)"
 
 dev:
 	pnpm dev
@@ -25,23 +31,29 @@ build:
 preview:
 	pnpm preview
 
-docker-build:
-	docker compose -f $(COMPOSE_FILE) build
+ensure-env:
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		echo "Creating $(ENV_FILE) from deployments/.env-local.example"; \
+		cp deployments/.env-local.example "$(ENV_FILE)"; \
+	fi
 
-docker-up:
-	docker compose -f $(COMPOSE_FILE) up --build -d
+docker-build: ensure-env
+	$(COMPOSE) build
 
-docker-down:
-	docker compose -f $(COMPOSE_FILE) down
+docker-up: ensure-env
+	$(COMPOSE) up --build -d
 
-docker-logs:
-	docker compose -f $(COMPOSE_FILE) logs -f $(SERVICE)
+docker-down: ensure-env
+	$(COMPOSE) down
 
-docker-ps:
-	docker compose -f $(COMPOSE_FILE) ps
+docker-logs: ensure-env
+	$(COMPOSE) logs -f $(SERVICE)
 
-docker-restart:
-	docker compose -f $(COMPOSE_FILE) restart $(SERVICE)
+docker-ps: ensure-env
+	$(COMPOSE) ps
 
-docker-clean:
-	docker compose -f $(COMPOSE_FILE) down --rmi local --remove-orphans
+docker-restart: ensure-env
+	$(COMPOSE) restart $(SERVICE)
+
+docker-clean: ensure-env
+	$(COMPOSE) down --rmi local --remove-orphans
