@@ -18,6 +18,9 @@ const statusEl = document.querySelector<HTMLSpanElement>("#status");
 const parent = document.querySelector<HTMLDivElement>("#editor");
 const themeButton = document.querySelector<HTMLButtonElement>("#toggle-theme");
 
+const loadLeftButton = document.querySelector<HTMLButtonElement>("#load-left");
+const saveRightButton = document.querySelector<HTMLButtonElement>("#save-right");
+
 if (!parent) {
 	throw new Error("Missing #editor");
 }
@@ -176,6 +179,158 @@ function replaceEditorText(view: EditorView, text: string) {
 		},
 	});
 }
+
+function isValidSaveId(id: string) {
+	return /^[A-Za-z0-9_-]+$/.test(id);
+}
+
+function getPassphraseViaModal(): Promise<string | null> {
+	return new Promise((resolve) => {
+		const overlay = document.createElement("div");
+		overlay.style.position = "fixed";
+		overlay.style.inset = "0";
+		overlay.style.background = "rgba(0,0,0,0.4)";
+		overlay.style.display = "flex";
+		overlay.style.alignItems = "center";
+		overlay.style.justifyContent = "center";
+		overlay.style.zIndex = "9999";
+
+		const dialog = document.createElement("div");
+		dialog.style.background = "white";
+		dialog.style.color = "black";
+		dialog.style.padding = "16px";
+		dialog.style.borderRadius = "10px";
+		dialog.style.minWidth = "320px";
+
+		const title = document.createElement("div");
+		title.textContent = "Enter saves passphrase";
+		title.style.marginBottom = "10px";
+
+		const input = document.createElement("input");
+		input.type = "password";
+		input.autocomplete = "current-password";
+		input.style.width = "100%";
+		input.style.boxSizing = "border-box";
+		input.style.padding = "8px";
+		input.style.marginBottom = "10px";
+
+		const actions = document.createElement("div");
+		actions.style.display = "flex";
+		actions.style.gap = "8px";
+		actions.style.justifyContent = "flex-end";
+
+		const cancelBtn = document.createElement("button");
+		cancelBtn.type = "button";
+		cancelBtn.textContent = "Cancel";
+		const okBtn = document.createElement("button");
+		okBtn.type = "button";
+		okBtn.textContent = "OK";
+
+		actions.append(cancelBtn, okBtn);
+		dialog.append(title, input, actions);
+		overlay.appendChild(dialog);
+		document.body.appendChild(overlay);
+
+		input.focus();
+
+		function cleanup() {
+			overlay.remove();
+		}
+
+		cancelBtn.addEventListener("click", () => {
+			cleanup();
+			resolve(null);
+		});
+
+		okBtn.addEventListener("click", () => {
+			cleanup();
+			resolve(input.value);
+		});
+
+		input.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") {
+				cleanup();
+				resolve(input.value);
+			}
+			if (e.key === "Escape") {
+				cleanup();
+				resolve(null);
+			}
+		});
+	});
+}
+
+async function loadIntoLeftFromApi() {
+	const id = window.prompt("Enter save id/key")?.trim();
+	if (!id) return setStatus("Missing id");
+	if (!isValidSaveId(id)) return setStatus("Invalid id format");
+
+	const passphrase = (await getPassphraseViaModal()) ?? "";
+	if (!passphrase) return setStatus("Missing passphrase");
+
+	setStatus(`Loading ${id}...`);
+
+	const res = await fetch(`/api/saves/${encodeURIComponent(id)}`, {
+		method: "GET",
+		headers: {
+			"x-saves-passphrase": passphrase,
+		},
+	});
+
+	if (!res.ok) {
+		setStatus(`Load failed (${res.status})`);
+		return;
+	}
+
+	const text = await res.text();
+	replaceEditorText(mergeView.a, text);
+	localStorage.setItem(LEFT_KEY, text);
+	setStatus(`Loaded ${id}`);
+}
+
+loadLeftButton?.addEventListener("click", () => {
+	loadIntoLeftFromApi().catch((e) => {
+		console.error(e);
+		setStatus("Load error");
+	});
+});
+
+async function saveRightToApi() {
+	const id = window.prompt("Enter save id/key")?.trim();
+	if (!id) return setStatus("Missing id");
+	if (!isValidSaveId(id)) return setStatus("Invalid id format");
+
+	const passphrase = (await getPassphraseViaModal()) ?? "";
+	if (!passphrase) return setStatus("Missing passphrase");
+
+	setStatus(`Saving ${id}...`);
+
+	const text = mergeView.b.state.doc.toString();
+
+	const res = await fetch(`/api/saves/${encodeURIComponent(id)}`, {
+		method: "POST",
+		headers: {
+			"x-saves-passphrase": passphrase,
+			"content-type": "text/plain",
+		},
+		body: text,
+	});
+
+	if (!res.ok) {
+		setStatus(`Save failed (${res.status})`);
+		return;
+	}
+
+	localStorage.setItem(RIGHT_KEY, text);
+	setStatus(`Saved ${id}`);
+}
+
+saveRightButton?.addEventListener("click", () => {
+	saveRightToApi().catch((e) => {
+		console.error(e);
+		setStatus("Save error");
+	});
+});
 
 document.querySelector<HTMLButtonElement>("#swap")?.addEventListener("click", () => {
 	const leftText = mergeView.a.state.doc.toString();
