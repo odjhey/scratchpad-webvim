@@ -1,0 +1,9 @@
+services:
+  webvim:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile
+    container_name: webvim
+    ports:
+      - "8080:80"
+    restart: unless-stopped
