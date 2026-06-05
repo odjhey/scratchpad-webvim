@@ -28,3 +28,6 @@ coverage/
 # temporary files
 tmp/
 temp/
+
+# ephemeral saves (API temporary storage)
+saves/

@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+
+FROM node:24.16.0-alpine
+
+WORKDIR /app
+
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+
+# prod-only deps (still includes Hono)
+RUN pnpm install --prod --frozen-lockfile
+
+COPY api ./api
+
+ENV SAVES_DIR=/data/saves
+EXPOSE 3000
+
+CMD ["node", "api/server.mjs"]

@@ -1,4 +1,16 @@
 services:
+  api:
+    build:
+      context: ..
+      dockerfile: deployments/ApiDockerfile
+    container_name: webvim-api
+    environment:
+      - SAVES_DIR=/data/saves
+      - SAVES_PASSPHRASE=${SAVES_PASSPHRASE:-CHANGE_ME}
+    tmpfs:
+      - /data/saves
+    restart: unless-stopped
+
   webvim:
     build:
       context: ..
@@ -7,3 +19,5 @@ services:
     ports:
       - "${PORT:-8080}:80"
     restart: unless-stopped
+    depends_on:
+      - api
