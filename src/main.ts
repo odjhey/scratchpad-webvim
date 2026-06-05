@@ -95,6 +95,12 @@ const mergeView = new MergeView({
 		margin: 3,
 		minSize: 6,
 	},
+
+	diffConfig: {
+		scanLimit: 50_000,
+		timeout: 5_000,
+	},
+
 });
 
 function applyPageTheme() {
